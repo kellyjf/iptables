@@ -1,0 +1,32 @@
+#! /bin/bash
+
+
+for ns in router hosta hostb; do
+	ip netns del $ns
+	ip netns add $ns
+	ip link add ${ns}-in type veth peer name ${ns}-out
+	ip link set ${ns}-in netns $ns up
+	if [ $ns == "router" ] ; then
+		ip link set ${ns}-out name $ns up
+	else
+		ip link set ${ns}-out netns router name $ns up
+	fi
+	ip netns exec $ns ip link set lo up
+done
+
+INR="ip netns exec router"
+INA="ip netns exec hosta"
+INB="ip netns exec hostb"
+
+$INR brctl addbr br0
+$INR brctl addif br0 hosta	
+$INR brctl addif br0 hostb	
+$INR ip link set br0 up
+
+$INR ip addr add 172.20.10.1/24 dev br0
+
+$INA ip addr add 172.20.10.100/24 dev hosta
+$INB ip addr add 172.20.10.50/24 dev hostb
+
+
+

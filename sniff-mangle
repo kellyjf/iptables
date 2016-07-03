@@ -1,0 +1,15 @@
+#! /bin/bash
+
+
+
+iptables -t nat -F
+iptables -t mangle -F
+
+iptables -t nat -o hostb -A POSTROUTING -j MASQUERADE
+iptables -t mangle  -A PREROUTING  -j NFLOG --nflog-group=1 --nflog-prefix="PRE"
+iptables -t mangle  -A FORWARD     -j NFLOG --nflog-group=2 --nflog-prefix="FWD"
+iptables -t mangle  -A POSTROUTING -j NFLOG --nflog-group=3 --nflog-prefix="POST"
+
+
+
+

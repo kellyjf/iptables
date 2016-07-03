@@ -1,0 +1,36 @@
+#! /bin/bash
+
+
+for ns in router hosta hostb; do
+	ip netns del $ns
+	ip netns add $ns
+	ip link add ${ns}-in type veth peer name ${ns}-out
+	ip link set ${ns}-in netns $ns name $ns up
+	if [ $ns == "router" ] ; then
+		ip link set ${ns}-out name $ns up
+	else
+		ip link set ${ns}-out netns router name $ns up
+	fi
+	ip netns exec $ns ip link set lo up
+done
+
+INR="ip netns exec router"
+INA="ip netns exec hosta"
+INB="ip netns exec hostb"
+
+
+$INR ip addr add 172.20.10.1/24 dev hosta
+$INR ip addr add 192.168.1.61/24 dev hostb
+$INR bash -c "echo 1 > /proc/sys/net/ipv4/ip_forward"
+$INR iptables -t nat -o hostb -A POSTROUTING -j MASQUERADE
+$INR iptables -t nat -A PREROUTING  -j NFLOG --nflog-group=1 --nflog-prefix="PRE"
+$INR iptables        -A FORWARD     -j NFLOG --nflog-group=2 --nflog-prefix="FWD"
+$INR iptables -t nat -A POSTROUTING -j NFLOG --nflog-group=3 --nflog-prefix="POST"
+
+$INA ip addr add 172.20.10.100/24 dev hosta
+$INA ip route add default via 172.20.10.1
+ 
+$INB ip addr add 192.168.1.15/24 dev hostb
+
+
+
