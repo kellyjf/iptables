@@ -22,10 +22,7 @@ INB="ip netns exec hostb"
 $INR ip addr add 172.20.10.1/24 dev hosta
 $INR ip addr add 192.168.1.61/24 dev hostb
 $INR bash -c "echo 1 > /proc/sys/net/ipv4/ip_forward"
-$INR iptables -t nat -o hostb -A POSTROUTING -j MASQUERADE
-$INR iptables -t nat -A PREROUTING  -j NFLOG --nflog-group=1 --nflog-prefix="PRE"
-$INR iptables        -A FORWARD     -j NFLOG --nflog-group=2 --nflog-prefix="FWD"
-$INR iptables -t nat -A POSTROUTING -j NFLOG --nflog-group=3 --nflog-prefix="POST"
+$INR ./sniff-mangle
 
 $INA ip addr add 172.20.10.100/24 dev hosta
 $INA ip route add default via 172.20.10.1
