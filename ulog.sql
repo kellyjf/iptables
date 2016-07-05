@@ -20,22 +20,24 @@ CREATE TABLE ct (
 		);
 drop table if exists pkt;
 CREATE TABLE pkt (
-			raw_pktlen		INT UNSIGNED,
-			raw_pktcount		INT UNSIGNED,
+			oob_time_sec		INT UNSIGNED,
+			oob_time_usec		INT UNSIGNED,
 			oob_in			VARCHAR(20),
 			oob_out			VARCHAR(20),
 			ip_saddr_str		VARCHAR(20),
 			ip_daddr_str		VARCHAR(20),
 			ip_id			SMALLINT UNSIGNED,
+			oob_prefix		VARCHAR(64),
+			oob_mark		INT UNSIGNED,
 			tcp_sport		SMALLINT UNSIGNED,
 			tcp_dport		SMALLINT UNSIGNED,
+			udp_sport		SMALLINT UNSIGNED,
+			udp_dport		SMALLINT UNSIGNED,
 			icmp_type		TINYINT UNSIGNED,
 			icmp_code		TINYINT UNSIGNED,
-			oob_prefix		VARCHAR(64),
-			oob_time_sec		INT UNSIGNED,
-			oob_time_usec		INT UNSIGNED,
-			oob_mark		INT UNSIGNED,
-			oob_hook		TINYINT UNSIGNED,
+			arp_saddr		INT UNSIGNED,
+			arp_daddr		INT UNSIGNED,
+			raw_pktlen		INT UNSIGNED,
+			raw_pktcount		INT UNSIGNED,
 			oob_uid			INT UNSIGNED,
-			oob_gid			INT UNSIGNED
 		);

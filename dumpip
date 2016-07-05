@@ -18,7 +18,7 @@ for ns in atg4g venturi-1 venturi-2; do
 	done| sed -e 's/^/\t/'
 	
 	echo; echo "------- rules      -------------"
-	$NS ip rule ls 
+	$NS ip rule ls
 
 	echo; echo "------- routes      -------------"
 	for table in $($NS ip rule ls | awk '{print $NF}'); do

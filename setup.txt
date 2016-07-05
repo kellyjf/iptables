@@ -1,0 +1,749 @@
+
+
+====== NAMESPACE atg4g ==========
+
+------- addresses  -------------
+1: lo    inet 127.0.0.1/8 scope host lo\       valid_lft forever preferred_lft forever
+18: venturi-2    inet 172.20.60.2/24 scope global venturi-2\       valid_lft forever preferred_lft forever
+20: eth1    inet 192.168.2.1/30 scope global eth1\       valid_lft forever preferred_lft forever
+21: venturi-1    inet 172.20.50.2/24 scope global venturi-1\       valid_lft forever preferred_lft forever
+25: eth2    inet 192.168.3.1/30 scope global eth2\       valid_lft forever preferred_lft forever
+27: eth0    inet 172.20.40.1/24 scope global eth0\       valid_lft forever preferred_lft forever
+
+------- Firewall    -------------
+	
+	-------|PREROUTING  |-------------
+		
+		------- raw  -------------
+		-P PREROUTING ACCEPT
+		
+		------- mangle  -------------
+		-P PREROUTING ACCEPT
+		-A PREROUTING -d 8.8.8.8/32 -j NFLOG --nflog-prefix  PRE --nflog-group 2
+		-A PREROUTING -d 8.8.4.4/32 -i eth0 -j MARK --set-xmark 0xd4/0xffffffff
+		-A PREROUTING -d 8.8.8.8/32 -i eth0 -j MARK --set-xmark 0xd3/0xffffffff
+		-A PREROUTING -s 10.47.0.0/24 -i venturi-2 -j MARK --set-xmark 0x138/0xffffffff
+		-A PREROUTING -s 172.20.60.1/32 -i venturi-2 -j MARK --set-xmark 0x138/0xffffffff
+		-A PREROUTING -s 10.47.0.0/24 -i venturi-1 -j MARK --set-xmark 0x137/0xffffffff
+		-A PREROUTING -s 172.20.50.1/32 -i venturi-1 -j MARK --set-xmark 0x137/0xffffffff
+		
+		------- nat  -------------
+		-P PREROUTING ACCEPT
+		
+		------- filter  -------------
+	
+	-------|OUTPUT      |-------------
+		
+		------- raw  -------------
+		-P OUTPUT ACCEPT
+		
+		------- mangle  -------------
+		-P OUTPUT ACCEPT
+		-A OUTPUT -d 8.8.8.8/32 -j NFLOG --nflog-prefix  OUT --nflog-group 2
+		-A OUTPUT -s 192.168.3.1/32 -j MARK --set-xmark 0x138/0xffffffff
+		-A OUTPUT -s 192.168.2.1/32 -j MARK --set-xmark 0x137/0xffffffff
+		
+		------- nat  -------------
+		-P OUTPUT ACCEPT
+		
+		------- filter  -------------
+		-P OUTPUT ACCEPT
+
+------- rules      -------------
+0:	from all lookup local 
+100:	from all fwmark 0xd3 lookup AIRCARD1ROUTE 
+100:	from all fwmark 0xd4 lookup AIRCARD2ROUTE 
+100:	from all fwmark 0x138 lookup AIRCARD2 
+100:	from all fwmark 0x137 lookup AIRCARD1 
+32766:	from all lookup main 
+32767:	from all lookup default 
+
+------- routes      -------------
+	
+	------- local routes    -------------
+	broadcast 127.0.0.0 dev lo  proto kernel  scope link  src 127.0.0.1 
+	local 127.0.0.0/8 dev lo  proto kernel  scope host  src 127.0.0.1 
+	local 127.0.0.1 dev lo  proto kernel  scope host  src 127.0.0.1 
+	broadcast 127.255.255.255 dev lo  proto kernel  scope link  src 127.0.0.1 
+	broadcast 172.20.40.0 dev eth0  proto kernel  scope link  src 172.20.40.1 
+	local 172.20.40.1 dev eth0  proto kernel  scope host  src 172.20.40.1 
+	broadcast 172.20.40.255 dev eth0  proto kernel  scope link  src 172.20.40.1 
+	broadcast 172.20.50.0 dev venturi-1  proto kernel  scope link  src 172.20.50.2 
+	local 172.20.50.2 dev venturi-1  proto kernel  scope host  src 172.20.50.2 
+	broadcast 172.20.50.255 dev venturi-1  proto kernel  scope link  src 172.20.50.2 
+	broadcast 172.20.60.0 dev venturi-2  proto kernel  scope link  src 172.20.60.2 
+	local 172.20.60.2 dev venturi-2  proto kernel  scope host  src 172.20.60.2 
+	broadcast 172.20.60.255 dev venturi-2  proto kernel  scope link  src 172.20.60.2 
+	broadcast 192.168.2.0 dev eth1  proto kernel  scope link  src 192.168.2.1 
+	local 192.168.2.1 dev eth1  proto kernel  scope host  src 192.168.2.1 
+	broadcast 192.168.2.3 dev eth1  proto kernel  scope link  src 192.168.2.1 
+	broadcast 192.168.3.0 dev eth2  proto kernel  scope link  src 192.168.3.1 
+	local 192.168.3.1 dev eth2  proto kernel  scope host  src 192.168.3.1 
+	broadcast 192.168.3.3 dev eth2  proto kernel  scope link  src 192.168.3.1 
+	
+	------- AIRCARD1ROUTE routes    -------------
+	default via 172.20.50.1 dev venturi-1 
+	
+	------- AIRCARD2ROUTE routes    -------------
+	default via 172.20.60.1 dev venturi-2 
+	
+	------- AIRCARD2 routes    -------------
+	default via 192.168.3.2 dev eth2 
+	
+	------- AIRCARD1 routes    -------------
+	default via 192.168.2.2 dev eth1 
+	
+	------- main routes    -------------
+	default via 172.20.50.1 dev venturi-1 
+	10.47.0.0/24 via 172.20.60.1 dev venturi-2 
+	172.20.10.0/24 via 172.20.40.2 dev eth0 
+	172.20.40.0/24 dev eth0  proto kernel  scope link  src 172.20.40.1 
+	172.20.50.0/24 dev venturi-1  proto kernel  scope link  src 172.20.50.2 
+	172.20.60.0/24 dev venturi-2  proto kernel  scope link  src 172.20.60.2 
+	192.168.2.0/30 dev eth1  proto kernel  scope link  src 192.168.2.1 
+	192.168.3.0/30 dev eth2  proto kernel  scope link  src 192.168.3.1 
+	
+	------- default routes    -------------
+
+------- Firewall    -------------
+	
+	------- {|INPUT     |} -------------
+		
+		------- raw  -------------
+		
+		------- mangle  -------------
+		-P INPUT ACCEPT
+		
+		------- nat  -------------
+		-P INPUT ACCEPT
+		
+		------- filter  -------------
+		-P INPUT ACCEPT
+	
+	------- {|FORWARD   |} -------------
+		
+		------- raw  -------------
+		
+		------- mangle  -------------
+		-P FORWARD ACCEPT
+		-A FORWARD -d 8.8.8.8/32 -j NFLOG --nflog-prefix  FWD --nflog-group 2
+		
+		------- nat  -------------
+		
+		------- filter  -------------
+		-P FORWARD ACCEPT
+	
+	------- {|OUTPUT    |} -------------
+		
+		------- raw  -------------
+		-P OUTPUT ACCEPT
+		
+		------- mangle  -------------
+		-P OUTPUT ACCEPT
+		-A OUTPUT -d 8.8.8.8/32 -j NFLOG --nflog-prefix  OUT --nflog-group 2
+		-A OUTPUT -s 192.168.3.1/32 -j MARK --set-xmark 0x138/0xffffffff
+		-A OUTPUT -s 192.168.2.1/32 -j MARK --set-xmark 0x137/0xffffffff
+		
+		------- nat  -------------
+		-P OUTPUT ACCEPT
+		
+		------- filter  -------------
+		-P OUTPUT ACCEPT
+	
+	------- {|POSTROUTIN|} -------------
+		
+		------- raw  -------------
+		
+		------- mangle  -------------
+		-P POSTROUTING ACCEPT
+		-A POSTROUTING -d 8.8.8.8/32 -j NFLOG --nflog-prefix  POST --nflog-group 2
+		
+		------- nat  -------------
+		-P POSTROUTING ACCEPT
+		-A POSTROUTING -o eth1 -j MASQUERADE
+		-A POSTROUTING -o eth2 -j MASQUERADE
+		-A POSTROUTING -s 172.20.40.1/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.162.2
+		-A POSTROUTING -s 172.20.10.100/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.100
+		-A POSTROUTING -s 172.20.10.101/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.101
+		-A POSTROUTING -s 172.20.10.102/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.102
+		-A POSTROUTING -s 172.20.10.103/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.103
+		-A POSTROUTING -s 172.20.10.104/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.104
+		-A POSTROUTING -s 172.20.10.105/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.105
+		-A POSTROUTING -s 172.20.10.106/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.106
+		-A POSTROUTING -s 172.20.10.107/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.107
+		-A POSTROUTING -s 172.20.10.108/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.108
+		-A POSTROUTING -s 172.20.10.109/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.109
+		-A POSTROUTING -s 172.20.10.110/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.110
+		-A POSTROUTING -s 172.20.10.111/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.111
+		-A POSTROUTING -s 172.20.10.112/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.112
+		-A POSTROUTING -s 172.20.10.113/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.113
+		-A POSTROUTING -s 172.20.10.114/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.114
+		-A POSTROUTING -s 172.20.10.115/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.115
+		-A POSTROUTING -s 172.20.10.116/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.116
+		-A POSTROUTING -s 172.20.10.117/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.117
+		-A POSTROUTING -s 172.20.10.118/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.118
+		-A POSTROUTING -s 172.20.10.119/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.119
+		-A POSTROUTING -s 172.20.10.120/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.120
+		-A POSTROUTING -s 172.20.10.121/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.121
+		-A POSTROUTING -s 172.20.10.122/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.122
+		-A POSTROUTING -s 172.20.10.123/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.123
+		-A POSTROUTING -s 172.20.10.124/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.124
+		-A POSTROUTING -s 172.20.10.125/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.125
+		-A POSTROUTING -s 172.20.10.126/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.126
+		-A POSTROUTING -s 172.20.10.127/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.127
+		-A POSTROUTING -s 172.20.10.128/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.128
+		-A POSTROUTING -s 172.20.10.129/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.129
+		-A POSTROUTING -s 172.20.10.130/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.130
+		-A POSTROUTING -s 172.20.10.131/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.131
+		-A POSTROUTING -s 172.20.10.132/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.132
+		-A POSTROUTING -s 172.20.10.133/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.133
+		-A POSTROUTING -s 172.20.10.134/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.134
+		-A POSTROUTING -s 172.20.10.135/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.135
+		-A POSTROUTING -s 172.20.10.136/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.136
+		-A POSTROUTING -s 172.20.10.137/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.137
+		-A POSTROUTING -s 172.20.10.138/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.138
+		-A POSTROUTING -s 172.20.10.139/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.139
+		-A POSTROUTING -s 172.20.10.140/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.140
+		-A POSTROUTING -s 172.20.10.141/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.141
+		-A POSTROUTING -s 172.20.10.142/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.142
+		-A POSTROUTING -s 172.20.10.143/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.143
+		-A POSTROUTING -s 172.20.10.144/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.144
+		-A POSTROUTING -s 172.20.10.145/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.145
+		-A POSTROUTING -s 172.20.10.146/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.146
+		-A POSTROUTING -s 172.20.10.147/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.147
+		-A POSTROUTING -s 172.20.10.148/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.148
+		-A POSTROUTING -s 172.20.10.149/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.149
+		-A POSTROUTING -s 172.20.10.150/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.150
+		-A POSTROUTING -s 172.20.10.151/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.151
+		-A POSTROUTING -s 172.20.10.152/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.152
+		-A POSTROUTING -s 172.20.10.153/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.153
+		-A POSTROUTING -s 172.20.10.154/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.154
+		-A POSTROUTING -s 172.20.10.155/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.155
+		-A POSTROUTING -s 172.20.10.156/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.156
+		-A POSTROUTING -s 172.20.10.157/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.157
+		-A POSTROUTING -s 172.20.10.158/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.158
+		-A POSTROUTING -s 172.20.10.159/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.159
+		-A POSTROUTING -s 172.20.10.160/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.160
+		-A POSTROUTING -s 172.20.10.161/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.161
+		-A POSTROUTING -s 172.20.10.162/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.162
+		-A POSTROUTING -s 172.20.10.163/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.163
+		-A POSTROUTING -s 172.20.10.164/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.164
+		-A POSTROUTING -s 172.20.10.165/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.165
+		-A POSTROUTING -s 172.20.10.166/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.166
+		-A POSTROUTING -s 172.20.10.167/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.167
+		-A POSTROUTING -s 172.20.10.168/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.168
+		-A POSTROUTING -s 172.20.10.169/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.169
+		-A POSTROUTING -s 172.20.10.170/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.170
+		-A POSTROUTING -s 172.20.10.171/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.171
+		-A POSTROUTING -s 172.20.10.172/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.172
+		-A POSTROUTING -s 172.20.10.173/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.173
+		-A POSTROUTING -s 172.20.10.174/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.174
+		-A POSTROUTING -s 172.20.10.175/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.175
+		-A POSTROUTING -s 172.20.10.176/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.176
+		-A POSTROUTING -s 172.20.10.177/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.177
+		-A POSTROUTING -s 172.20.10.178/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.178
+		-A POSTROUTING -s 172.20.10.179/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.179
+		-A POSTROUTING -s 172.20.10.180/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.180
+		-A POSTROUTING -s 172.20.10.181/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.181
+		-A POSTROUTING -s 172.20.10.182/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.182
+		-A POSTROUTING -s 172.20.10.183/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.183
+		-A POSTROUTING -s 172.20.10.184/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.184
+		-A POSTROUTING -s 172.20.10.185/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.185
+		-A POSTROUTING -s 172.20.10.186/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.186
+		-A POSTROUTING -s 172.20.10.187/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.187
+		-A POSTROUTING -s 172.20.10.188/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.188
+		-A POSTROUTING -s 172.20.10.189/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.189
+		-A POSTROUTING -s 172.20.10.190/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.190
+		-A POSTROUTING -s 172.20.10.191/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.191
+		-A POSTROUTING -s 172.20.10.192/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.192
+		-A POSTROUTING -s 172.20.10.193/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.193
+		-A POSTROUTING -s 172.20.10.194/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.194
+		-A POSTROUTING -s 172.20.10.195/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.195
+		-A POSTROUTING -s 172.20.10.196/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.196
+		-A POSTROUTING -s 172.20.10.197/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.197
+		-A POSTROUTING -s 172.20.10.198/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.198
+		-A POSTROUTING -s 172.20.10.199/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.199
+		-A POSTROUTING -s 172.20.10.200/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.200
+		-A POSTROUTING -s 172.20.10.201/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.201
+		-A POSTROUTING -s 172.20.10.202/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.202
+		-A POSTROUTING -s 172.20.10.203/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.203
+		-A POSTROUTING -s 172.20.10.204/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.204
+		-A POSTROUTING -s 172.20.10.205/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.205
+		-A POSTROUTING -s 172.20.10.206/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.206
+		-A POSTROUTING -s 172.20.10.207/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.207
+		-A POSTROUTING -s 172.20.10.208/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.208
+		-A POSTROUTING -s 172.20.10.209/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.209
+		-A POSTROUTING -s 172.20.10.210/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.210
+		-A POSTROUTING -s 172.20.10.211/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.211
+		-A POSTROUTING -s 172.20.10.212/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.212
+		-A POSTROUTING -s 172.20.10.213/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.213
+		-A POSTROUTING -s 172.20.10.214/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.214
+		-A POSTROUTING -s 172.20.10.215/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.215
+		-A POSTROUTING -s 172.20.10.216/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.216
+		-A POSTROUTING -s 172.20.10.217/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.217
+		-A POSTROUTING -s 172.20.10.218/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.218
+		-A POSTROUTING -s 172.20.10.219/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.219
+		-A POSTROUTING -s 172.20.10.220/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.220
+		-A POSTROUTING -s 172.20.10.221/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.221
+		-A POSTROUTING -s 172.20.10.222/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.222
+		-A POSTROUTING -s 172.20.10.223/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.223
+		-A POSTROUTING -s 172.20.10.224/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.224
+		-A POSTROUTING -s 172.20.10.225/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.225
+		-A POSTROUTING -s 172.20.10.226/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.226
+		-A POSTROUTING -s 172.20.10.227/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.227
+		-A POSTROUTING -s 172.20.10.228/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.228
+		-A POSTROUTING -s 172.20.10.229/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.229
+		-A POSTROUTING -s 172.20.10.230/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.230
+		-A POSTROUTING -s 172.20.10.231/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.231
+		-A POSTROUTING -s 172.20.10.232/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.232
+		-A POSTROUTING -s 172.20.10.233/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.233
+		-A POSTROUTING -s 172.20.10.234/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.234
+		-A POSTROUTING -s 172.20.10.235/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.235
+		-A POSTROUTING -s 172.20.10.236/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.236
+		-A POSTROUTING -s 172.20.10.237/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.237
+		-A POSTROUTING -s 172.20.10.238/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.238
+		-A POSTROUTING -s 172.20.10.239/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.239
+		-A POSTROUTING -s 172.20.10.240/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.240
+		-A POSTROUTING -s 172.20.10.241/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.241
+		-A POSTROUTING -s 172.20.10.242/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.242
+		-A POSTROUTING -s 172.20.10.243/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.243
+		-A POSTROUTING -s 172.20.10.244/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.244
+		-A POSTROUTING -s 172.20.10.245/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.245
+		-A POSTROUTING -s 172.20.10.246/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.246
+		-A POSTROUTING -s 172.20.10.247/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.247
+		-A POSTROUTING -s 172.20.10.248/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.248
+		-A POSTROUTING -s 172.20.10.249/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.249
+		-A POSTROUTING -s 172.20.10.250/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.250
+		-A POSTROUTING -s 172.20.10.251/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.251
+		-A POSTROUTING -s 172.20.10.252/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.252
+		-A POSTROUTING -s 172.20.10.253/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.253
+		-A POSTROUTING -s 172.20.10.254/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.254
+		-A POSTROUTING -s 172.20.10.255/32 -o venturi-2 -m mark --mark 0xd4 -j SNAT --to-source 10.47.163.255
+		-A POSTROUTING -s 172.20.40.1/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.1
+		-A POSTROUTING -s 172.20.10.100/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.100
+		-A POSTROUTING -s 172.20.10.101/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.101
+		-A POSTROUTING -s 172.20.10.102/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.102
+		-A POSTROUTING -s 172.20.10.103/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.103
+		-A POSTROUTING -s 172.20.10.104/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.104
+		-A POSTROUTING -s 172.20.10.105/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.105
+		-A POSTROUTING -s 172.20.10.106/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.106
+		-A POSTROUTING -s 172.20.10.107/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.107
+		-A POSTROUTING -s 172.20.10.108/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.108
+		-A POSTROUTING -s 172.20.10.109/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.109
+		-A POSTROUTING -s 172.20.10.110/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.110
+		-A POSTROUTING -s 172.20.10.111/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.111
+		-A POSTROUTING -s 172.20.10.112/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.112
+		-A POSTROUTING -s 172.20.10.113/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.113
+		-A POSTROUTING -s 172.20.10.114/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.114
+		-A POSTROUTING -s 172.20.10.115/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.115
+		-A POSTROUTING -s 172.20.10.116/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.116
+		-A POSTROUTING -s 172.20.10.117/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.117
+		-A POSTROUTING -s 172.20.10.118/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.118
+		-A POSTROUTING -s 172.20.10.119/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.119
+		-A POSTROUTING -s 172.20.10.120/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.120
+		-A POSTROUTING -s 172.20.10.121/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.121
+		-A POSTROUTING -s 172.20.10.122/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.122
+		-A POSTROUTING -s 172.20.10.123/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.123
+		-A POSTROUTING -s 172.20.10.124/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.124
+		-A POSTROUTING -s 172.20.10.125/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.125
+		-A POSTROUTING -s 172.20.10.126/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.126
+		-A POSTROUTING -s 172.20.10.127/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.127
+		-A POSTROUTING -s 172.20.10.128/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.128
+		-A POSTROUTING -s 172.20.10.129/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.129
+		-A POSTROUTING -s 172.20.10.130/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.130
+		-A POSTROUTING -s 172.20.10.131/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.131
+		-A POSTROUTING -s 172.20.10.132/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.132
+		-A POSTROUTING -s 172.20.10.133/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.133
+		-A POSTROUTING -s 172.20.10.134/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.134
+		-A POSTROUTING -s 172.20.10.135/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.135
+		-A POSTROUTING -s 172.20.10.136/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.136
+		-A POSTROUTING -s 172.20.10.137/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.137
+		-A POSTROUTING -s 172.20.10.138/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.138
+		-A POSTROUTING -s 172.20.10.139/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.139
+		-A POSTROUTING -s 172.20.10.140/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.140
+		-A POSTROUTING -s 172.20.10.141/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.141
+		-A POSTROUTING -s 172.20.10.142/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.142
+		-A POSTROUTING -s 172.20.10.143/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.143
+		-A POSTROUTING -s 172.20.10.144/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.144
+		-A POSTROUTING -s 172.20.10.145/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.145
+		-A POSTROUTING -s 172.20.10.146/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.146
+		-A POSTROUTING -s 172.20.10.147/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.147
+		-A POSTROUTING -s 172.20.10.148/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.148
+		-A POSTROUTING -s 172.20.10.149/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.149
+		-A POSTROUTING -s 172.20.10.150/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.150
+		-A POSTROUTING -s 172.20.10.151/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.151
+		-A POSTROUTING -s 172.20.10.152/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.152
+		-A POSTROUTING -s 172.20.10.153/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.153
+		-A POSTROUTING -s 172.20.10.154/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.154
+		-A POSTROUTING -s 172.20.10.155/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.155
+		-A POSTROUTING -s 172.20.10.156/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.156
+		-A POSTROUTING -s 172.20.10.157/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.157
+		-A POSTROUTING -s 172.20.10.158/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.158
+		-A POSTROUTING -s 172.20.10.159/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.159
+		-A POSTROUTING -s 172.20.10.160/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.160
+		-A POSTROUTING -s 172.20.10.161/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.161
+		-A POSTROUTING -s 172.20.10.162/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.162
+		-A POSTROUTING -s 172.20.10.163/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.163
+		-A POSTROUTING -s 172.20.10.164/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.164
+		-A POSTROUTING -s 172.20.10.165/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.165
+		-A POSTROUTING -s 172.20.10.166/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.166
+		-A POSTROUTING -s 172.20.10.167/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.167
+		-A POSTROUTING -s 172.20.10.168/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.168
+		-A POSTROUTING -s 172.20.10.169/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.169
+		-A POSTROUTING -s 172.20.10.170/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.170
+		-A POSTROUTING -s 172.20.10.171/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.171
+		-A POSTROUTING -s 172.20.10.172/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.172
+		-A POSTROUTING -s 172.20.10.173/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.173
+		-A POSTROUTING -s 172.20.10.174/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.174
+		-A POSTROUTING -s 172.20.10.175/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.175
+		-A POSTROUTING -s 172.20.10.176/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.176
+		-A POSTROUTING -s 172.20.10.177/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.177
+		-A POSTROUTING -s 172.20.10.178/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.178
+		-A POSTROUTING -s 172.20.10.179/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.179
+		-A POSTROUTING -s 172.20.10.180/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.180
+		-A POSTROUTING -s 172.20.10.181/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.181
+		-A POSTROUTING -s 172.20.10.182/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.182
+		-A POSTROUTING -s 172.20.10.183/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.183
+		-A POSTROUTING -s 172.20.10.184/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.184
+		-A POSTROUTING -s 172.20.10.185/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.185
+		-A POSTROUTING -s 172.20.10.186/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.186
+		-A POSTROUTING -s 172.20.10.187/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.187
+		-A POSTROUTING -s 172.20.10.188/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.188
+		-A POSTROUTING -s 172.20.10.189/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.189
+		-A POSTROUTING -s 172.20.10.190/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.190
+		-A POSTROUTING -s 172.20.10.191/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.191
+		-A POSTROUTING -s 172.20.10.192/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.192
+		-A POSTROUTING -s 172.20.10.193/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.193
+		-A POSTROUTING -s 172.20.10.194/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.194
+		-A POSTROUTING -s 172.20.10.195/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.195
+		-A POSTROUTING -s 172.20.10.196/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.196
+		-A POSTROUTING -s 172.20.10.197/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.197
+		-A POSTROUTING -s 172.20.10.198/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.198
+		-A POSTROUTING -s 172.20.10.199/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.199
+		-A POSTROUTING -s 172.20.10.200/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.200
+		-A POSTROUTING -s 172.20.10.201/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.201
+		-A POSTROUTING -s 172.20.10.202/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.202
+		-A POSTROUTING -s 172.20.10.203/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.203
+		-A POSTROUTING -s 172.20.10.204/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.204
+		-A POSTROUTING -s 172.20.10.205/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.205
+		-A POSTROUTING -s 172.20.10.206/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.206
+		-A POSTROUTING -s 172.20.10.207/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.207
+		-A POSTROUTING -s 172.20.10.208/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.208
+		-A POSTROUTING -s 172.20.10.209/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.209
+		-A POSTROUTING -s 172.20.10.210/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.210
+		-A POSTROUTING -s 172.20.10.211/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.211
+		-A POSTROUTING -s 172.20.10.212/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.212
+		-A POSTROUTING -s 172.20.10.213/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.213
+		-A POSTROUTING -s 172.20.10.214/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.214
+		-A POSTROUTING -s 172.20.10.215/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.215
+		-A POSTROUTING -s 172.20.10.216/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.216
+		-A POSTROUTING -s 172.20.10.217/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.217
+		-A POSTROUTING -s 172.20.10.218/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.218
+		-A POSTROUTING -s 172.20.10.219/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.219
+		-A POSTROUTING -s 172.20.10.220/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.220
+		-A POSTROUTING -s 172.20.10.221/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.221
+		-A POSTROUTING -s 172.20.10.222/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.222
+		-A POSTROUTING -s 172.20.10.223/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.223
+		-A POSTROUTING -s 172.20.10.224/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.224
+		-A POSTROUTING -s 172.20.10.225/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.225
+		-A POSTROUTING -s 172.20.10.226/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.226
+		-A POSTROUTING -s 172.20.10.227/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.227
+		-A POSTROUTING -s 172.20.10.228/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.228
+		-A POSTROUTING -s 172.20.10.229/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.229
+		-A POSTROUTING -s 172.20.10.230/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.230
+		-A POSTROUTING -s 172.20.10.231/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.231
+		-A POSTROUTING -s 172.20.10.232/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.232
+		-A POSTROUTING -s 172.20.10.233/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.233
+		-A POSTROUTING -s 172.20.10.234/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.234
+		-A POSTROUTING -s 172.20.10.235/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.235
+		-A POSTROUTING -s 172.20.10.236/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.236
+		-A POSTROUTING -s 172.20.10.237/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.237
+		-A POSTROUTING -s 172.20.10.238/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.238
+		-A POSTROUTING -s 172.20.10.239/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.239
+		-A POSTROUTING -s 172.20.10.240/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.240
+		-A POSTROUTING -s 172.20.10.241/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.241
+		-A POSTROUTING -s 172.20.10.242/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.242
+		-A POSTROUTING -s 172.20.10.243/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.243
+		-A POSTROUTING -s 172.20.10.244/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.244
+		-A POSTROUTING -s 172.20.10.245/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.245
+		-A POSTROUTING -s 172.20.10.246/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.246
+		-A POSTROUTING -s 172.20.10.247/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.247
+		-A POSTROUTING -s 172.20.10.248/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.248
+		-A POSTROUTING -s 172.20.10.249/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.249
+		-A POSTROUTING -s 172.20.10.250/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.250
+		-A POSTROUTING -s 172.20.10.251/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.251
+		-A POSTROUTING -s 172.20.10.252/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.252
+		-A POSTROUTING -s 172.20.10.253/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.253
+		-A POSTROUTING -s 172.20.10.254/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.254
+		-A POSTROUTING -s 172.20.10.255/32 -o venturi-1 -m mark --mark 0xd3 -j SNAT --to-source 10.47.162.255
+		
+		------- filter  -------------
+
+
+====== NAMESPACE venturi-1 ==========
+
+------- addresses  -------------
+1: lo    inet 127.0.0.1/8 scope host lo\       valid_lft forever preferred_lft forever
+2: tun0    inet 127.2.0.2 peer 127.2.0.1/32 scope host tun0\       valid_lft forever preferred_lft forever
+22: eth0    inet 172.20.50.1/24 scope global eth0\       valid_lft forever preferred_lft forever
+22: eth0    inet 10.47.162.3/30 brd 10.47.162.3 scope global eth0:1\       valid_lft forever preferred_lft forever
+
+------- Firewall    -------------
+	
+	-------|PREROUTING  |-------------
+		
+		------- raw  -------------
+		-P PREROUTING ACCEPT
+		
+		------- mangle  -------------
+		-P PREROUTING ACCEPT
+		-A PREROUTING -d 8.8.8.8/32 -j NFLOG --nflog-prefix  PREv1 --nflog-group 2
+		-A PREROUTING ! -d 172.20.50.0/24 -i eth0 ! -p tcp -j MARK --set-xmark 0x11/0xffffffff
+		-A PREROUTING -i tun0 -j MARK --set-xmark 0x1/0xffffffff
+		
+		------- nat  -------------
+		-P PREROUTING ACCEPT
+		-A PREROUTING -p tcp -m multiport --dports 80,110,143,220,25,20,21,443 -j REDIRECT --to-ports 8001
+		
+		------- filter  -------------
+	
+	-------|OUTPUT      |-------------
+		
+		------- raw  -------------
+		-P OUTPUT ACCEPT
+		
+		------- mangle  -------------
+		-P OUTPUT ACCEPT
+		-A OUTPUT -d 8.8.8.8/32 -j NFLOG --nflog-prefix  OUTv1 --nflog-group 2
+		
+		------- nat  -------------
+		-P OUTPUT ACCEPT
+		-A OUTPUT -p tcp -m multiport --dports 80,110,143,220,25,20,21,443 -j REDIRECT --to-ports 8001
+		
+		------- filter  -------------
+		-P OUTPUT ACCEPT
+
+------- rules      -------------
+0:	from all lookup local 
+100:	from all fwmark 0x1 lookup tun_traffic_out1 
+32765:	from all fwmark 0x11 lookup non_tcp_traffic_in_path1 
+32766:	from all lookup main 
+32767:	from all lookup default 
+
+------- routes      -------------
+	
+	------- local routes    -------------
+	broadcast 10.47.162.0 dev eth0  proto kernel  scope link  src 10.47.162.3 
+	local 10.47.162.3 dev eth0  proto kernel  scope host  src 10.47.162.3 
+	broadcast 10.47.162.3 dev eth0  proto kernel  scope link  src 10.47.162.3 
+	broadcast 127.0.0.0 dev lo  proto kernel  scope link  src 127.0.0.1 
+	local 127.0.0.0/8 dev lo  proto kernel  scope host  src 127.0.0.1 
+	local 127.0.0.1 dev lo  proto kernel  scope host  src 127.0.0.1 
+	local 127.2.0.2 dev tun0  proto kernel  scope host  src 127.2.0.2 
+	broadcast 127.255.255.255 dev lo  proto kernel  scope link  src 127.0.0.1 
+	broadcast 172.20.50.0 dev eth0  proto kernel  scope link  src 172.20.50.1 
+	local 172.20.50.1 dev eth0  proto kernel  scope host  src 172.20.50.1 
+	broadcast 172.20.50.255 dev eth0  proto kernel  scope link  src 172.20.50.1 
+	
+	------- tun_traffic_out1 routes    -------------
+	default via 172.20.50.2 dev eth0 
+	
+	------- non_tcp_traffic_in_path1 routes    -------------
+	default dev tun0  scope link 
+	
+	------- main routes    -------------
+	default via 172.20.50.2 dev eth0 
+	10.47.162.0/30 dev eth0  proto kernel  scope link  src 10.47.162.3 
+	127.2.0.1 dev tun0  proto kernel  scope link  src 127.2.0.2 
+	172.20.50.0/24 dev eth0  proto kernel  scope link  src 172.20.50.1 
+	
+	------- default routes    -------------
+
+------- Firewall    -------------
+	
+	------- {|INPUT     |} -------------
+		
+		------- raw  -------------
+		
+		------- mangle  -------------
+		-P INPUT ACCEPT
+		
+		------- nat  -------------
+		-P INPUT ACCEPT
+		
+		------- filter  -------------
+		-P INPUT ACCEPT
+	
+	------- {|FORWARD   |} -------------
+		
+		------- raw  -------------
+		
+		------- mangle  -------------
+		-P FORWARD ACCEPT
+		-A FORWARD -d 8.8.8.8/32 -j NFLOG --nflog-prefix  FWDv1 --nflog-group 2
+		
+		------- nat  -------------
+		
+		------- filter  -------------
+		-P FORWARD ACCEPT
+	
+	------- {|OUTPUT    |} -------------
+		
+		------- raw  -------------
+		-P OUTPUT ACCEPT
+		
+		------- mangle  -------------
+		-P OUTPUT ACCEPT
+		-A OUTPUT -d 8.8.8.8/32 -j NFLOG --nflog-prefix  OUTv1 --nflog-group 2
+		
+		------- nat  -------------
+		-P OUTPUT ACCEPT
+		-A OUTPUT -p tcp -m multiport --dports 80,110,143,220,25,20,21,443 -j REDIRECT --to-ports 8001
+		
+		------- filter  -------------
+		-P OUTPUT ACCEPT
+	
+	------- {|POSTROUTIN|} -------------
+		
+		------- raw  -------------
+		
+		------- mangle  -------------
+		-P POSTROUTING ACCEPT
+		-A POSTROUTING -d 8.8.8.8/32 -j NFLOG --nflog-prefix  POSTv1 --nflog-group 2
+		
+		------- nat  -------------
+		-P POSTROUTING ACCEPT
+		
+		------- filter  -------------
+
+
+====== NAMESPACE venturi-2 ==========
+
+------- addresses  -------------
+1: lo    inet 127.0.0.1/8 scope host lo\       valid_lft forever preferred_lft forever
+2: tun0    inet 127.2.0.2 peer 127.2.0.1/32 scope host tun0\       valid_lft forever preferred_lft forever
+19: eth0    inet 172.20.60.1/24 scope global eth0\       valid_lft forever preferred_lft forever
+19: eth0    inet 10.47.163.3/30 brd 10.47.163.3 scope global eth0:1\       valid_lft forever preferred_lft forever
+
+------- Firewall    -------------
+	
+	-------|PREROUTING  |-------------
+		
+		------- raw  -------------
+		-P PREROUTING ACCEPT
+		
+		------- mangle  -------------
+		-P PREROUTING ACCEPT
+		-A PREROUTING ! -d 172.20.60.0/24 -i eth0 ! -p tcp -j MARK --set-xmark 0x11/0xffffffff
+		-A PREROUTING -i tun0 -j MARK --set-xmark 0x1/0xffffffff
+		
+		------- nat  -------------
+		-P PREROUTING ACCEPT
+		-A PREROUTING -p tcp -m multiport --dports 80,110,143,220,25,20,21,443 -j REDIRECT --to-ports 8001
+		
+		------- filter  -------------
+	
+	-------|OUTPUT      |-------------
+		
+		------- raw  -------------
+		-P OUTPUT ACCEPT
+		
+		------- mangle  -------------
+		-P OUTPUT ACCEPT
+		
+		------- nat  -------------
+		-P OUTPUT ACCEPT
+		-A OUTPUT -p tcp -m multiport --dports 80,110,143,220,25,20,21,443 -j REDIRECT --to-ports 8001
+		
+		------- filter  -------------
+		-P OUTPUT ACCEPT
+
+------- rules      -------------
+0:	from all lookup local 
+100:	from all fwmark 0x1 lookup tun_traffic_out2 
+32765:	from all fwmark 0x11 lookup non_tcp_traffic_in_path2 
+32766:	from all lookup main 
+32767:	from all lookup default 
+
+------- routes      -------------
+	
+	------- local routes    -------------
+	broadcast 10.47.163.0 dev eth0  proto kernel  scope link  src 10.47.163.3 
+	local 10.47.163.3 dev eth0  proto kernel  scope host  src 10.47.163.3 
+	broadcast 10.47.163.3 dev eth0  proto kernel  scope link  src 10.47.163.3 
+	broadcast 127.0.0.0 dev lo  proto kernel  scope link  src 127.0.0.1 
+	local 127.0.0.0/8 dev lo  proto kernel  scope host  src 127.0.0.1 
+	local 127.0.0.1 dev lo  proto kernel  scope host  src 127.0.0.1 
+	local 127.2.0.2 dev tun0  proto kernel  scope host  src 127.2.0.2 
+	broadcast 127.255.255.255 dev lo  proto kernel  scope link  src 127.0.0.1 
+	broadcast 172.20.60.0 dev eth0  proto kernel  scope link  src 172.20.60.1 
+	local 172.20.60.1 dev eth0  proto kernel  scope host  src 172.20.60.1 
+	broadcast 172.20.60.255 dev eth0  proto kernel  scope link  src 172.20.60.1 
+	
+	------- tun_traffic_out2 routes    -------------
+	default via 172.20.60.2 dev eth0 
+	
+	------- non_tcp_traffic_in_path2 routes    -------------
+	default dev tun0  scope link 
+	
+	------- main routes    -------------
+	default via 172.20.60.2 dev eth0 
+	10.47.163.0/30 dev eth0  proto kernel  scope link  src 10.47.163.3 
+	127.2.0.1 dev tun0  proto kernel  scope link  src 127.2.0.2 
+	172.20.60.0/24 dev eth0  proto kernel  scope link  src 172.20.60.1 
+	
+	------- default routes    -------------
+
+------- Firewall    -------------
+	
+	------- {|INPUT     |} -------------
+		
+		------- raw  -------------
+		
+		------- mangle  -------------
+		-P INPUT ACCEPT
+		
+		------- nat  -------------
+		-P INPUT ACCEPT
+		
+		------- filter  -------------
+		-P INPUT ACCEPT
+	
+	------- {|FORWARD   |} -------------
+		
+		------- raw  -------------
+		
+		------- mangle  -------------
+		-P FORWARD ACCEPT
+		
+		------- nat  -------------
+		
+		------- filter  -------------
+		-P FORWARD ACCEPT
+	
+	------- {|OUTPUT    |} -------------
+		
+		------- raw  -------------
+		-P OUTPUT ACCEPT
+		
+		------- mangle  -------------
+		-P OUTPUT ACCEPT
+		
+		------- nat  -------------
+		-P OUTPUT ACCEPT
+		-A OUTPUT -p tcp -m multiport --dports 80,110,143,220,25,20,21,443 -j REDIRECT --to-ports 8001
+		
+		------- filter  -------------
+		-P OUTPUT ACCEPT
+	
+	------- {|POSTROUTIN|} -------------
+		
+		------- raw  -------------
+		
+		------- mangle  -------------
+		-P POSTROUTING ACCEPT
+		
+		------- nat  -------------
+		-P POSTROUTING ACCEPT
+		
+		------- filter  -------------

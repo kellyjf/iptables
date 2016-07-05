@@ -1,0 +1,7 @@
+#! /bin/bash
+
+
+iptables -t mangle -I PREROUTING  -d 8.8.8.8 -j NFLOG --nflog-group 2 --nflog-prefix PRE${1}
+iptables -t mangle -I FORWARD     -d 8.8.8.8 -j NFLOG --nflog-group 2 --nflog-prefix FWD${1}
+iptables -t mangle -I OUTPUT      -d 8.8.8.8 -j NFLOG --nflog-group 2 --nflog-prefix OUT${1}
+iptables -t mangle -I POSTROUTING -d 8.8.8.8 -j NFLOG --nflog-group 2 --nflog-prefix POST${1}
