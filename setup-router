@@ -1,25 +1,37 @@
 #! /bin/bash
 
 
-for ns in router hosta hostb; do
+for ns in router hosta hostb adapter hostc ; do
 	ip netns del $ns
 	ip netns add $ns
 	ip link add ${ns}-in type veth peer name ${ns}-out
 	ip link set ${ns}-in netns $ns name $ns up
-	if [ $ns == "router" ] ; then
+	case "$ns" in
+	router)
 		ip link set ${ns}-out name $ns up
-	else
+		;;
+	hosta|hostb|adapter)
 		ip link set ${ns}-out netns router name $ns up
-	fi
+		;;
+	hostc)
+		ip link set ${ns}-out netns adapter name $ns up
+		;;
+	esac
 	ip netns exec $ns ip link set lo up
 done
 
 INR="ip netns exec router"
 INA="ip netns exec hosta"
 INB="ip netns exec hostb"
+IND="ip netns exec adapter"
+INC="ip netns exec hostc"
 
 
-$INR ip addr add 172.20.10.1/24 dev hosta
+$INR brctl addbr int-cabin
+$INR brctl addif int-cabin hosta
+$INR brctl addif int-cabin adapter
+$INR ip link set int-cabin up
+$INR ip addr add 172.20.10.1/24 dev int-cabin
 $INR ip addr add 192.168.1.61/24 dev hostb
 $INR bash -c "echo 1 > /proc/sys/net/ipv4/ip_forward"
 $INR ./sniff-mangle
@@ -30,4 +42,12 @@ $INA ip route add default via 172.20.10.1
 $INB ip addr add 192.168.1.15/24 dev hostb
 
 
+$IND ip addr add 172.20.10.40/24 dev adapter
+$IND ip addr add 192.168.51.1/24 dev hostc
+$IND ip route add default via 172.20.10.1
+$IND iptables -t nat -A PREROUTING -i hostc -j NETMAP --to 172.20.10.0/24 
+$IND iptables -t nat -A PREROUTING -i adapter -j NETMAP --to 192.168.51.0/24 
+$IND bash -c "echo 1 > /proc/sys/net/ipv4/ip_forward"
 
+$INC ip addr add 192.168.51.2/24 dev hostc
+$INC ip route add default via 192.168.51.1 

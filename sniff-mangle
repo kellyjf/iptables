@@ -9,12 +9,12 @@ conntrack -F
 iptables -t nat -o hostb -A POSTROUTING -j MASQUERADE
 iptables -t mangle  -m conntrack --ctstate NEW -A PREROUTING  -j CONNMARK  --set-mark 5 
 iptables -t mangle  -A PREROUTING  -j MARK  --set-mark 1 
-iptables -t mangle  -A PREROUTING  -j NFLOG --nflog-group=1 --nflog-prefix="PRE"
+iptables -t mangle  -A PREROUTING  -j NFLOG --nflog-group=2 --nflog-prefix="PRE"
 iptables -t mangle  -A FORWARD     -j MARK  --set-mark=2 
 iptables -t mangle  -A FORWARD     -j NFLOG --nflog-group=2 --nflog-prefix="FWD"
 iptables -t mangle  -A POSTROUTING -j MARK  --set-mark=3 
 iptables -t mangle  -A POSTROUTING -j CONNMARK  --restore-mark
-iptables -t mangle  -A POSTROUTING -j NFLOG --nflog-group=3 --nflog-prefix="POST"
+iptables -t mangle  -A POSTROUTING -j NFLOG --nflog-group=2 --nflog-prefix="POST"
 
 
 

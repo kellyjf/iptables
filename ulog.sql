@@ -18,54 +18,12 @@ CREATE TABLE ct (
 			reply_raw_pktcount	INT UNSIGNED,
 			ct_mark			INT UNSIGNED
 		);
-drop table if exists group1;
-CREATE TABLE group1 (
+drop table if exists pkt;
+CREATE TABLE pkt (
 			raw_pktlen		INT UNSIGNED,
 			raw_pktcount		INT UNSIGNED,
-			ip_saddr		INT UNSIGNED,
-			ip_daddr		INT UNSIGNED,
-			ip_saddr_str		VARCHAR(20),
-			ip_daddr_str		VARCHAR(20),
-			ip_id			SMALLINT UNSIGNED,
-			tcp_sport		SMALLINT UNSIGNED,
-			tcp_dport		SMALLINT UNSIGNED,
-			icmp_type		TINYINT UNSIGNED,
-			icmp_code		TINYINT UNSIGNED,
-			oob_prefix		VARCHAR(64),
-			oob_time_sec		INT UNSIGNED,
-			oob_time_usec		INT UNSIGNED,
-			oob_mark		INT UNSIGNED,
-			oob_hook		TINYINT UNSIGNED,
-			oob_uid			INT UNSIGNED,
-			oob_gid			INT UNSIGNED
-		);
-drop table if exists group2;
-CREATE TABLE group2 (
-			raw_pktlen		INT UNSIGNED,
-			raw_pktcount		INT UNSIGNED,
-			ip_saddr		INT UNSIGNED,
-			ip_daddr		INT UNSIGNED,
-			ip_saddr_str		VARCHAR(20),
-			ip_daddr_str		VARCHAR(20),
-			ip_id			SMALLINT UNSIGNED,
-			tcp_sport		SMALLINT UNSIGNED,
-			tcp_dport		SMALLINT UNSIGNED,
-			icmp_type		TINYINT UNSIGNED,
-			icmp_code		TINYINT UNSIGNED,
-			oob_prefix		VARCHAR(64),
-			oob_time_sec		INT UNSIGNED,
-			oob_time_usec		INT UNSIGNED,
-			oob_mark		INT UNSIGNED,
-			oob_hook		TINYINT UNSIGNED,
-			oob_uid			INT UNSIGNED,
-			oob_gid			INT UNSIGNED
-		);
-drop table if exists group3;
-CREATE TABLE group3 (
-			raw_pktlen		INT UNSIGNED,
-			raw_pktcount		INT UNSIGNED,
-			ip_saddr		INT UNSIGNED,
-			ip_daddr		INT UNSIGNED,
+			oob_in			VARCHAR(20),
+			oob_out			VARCHAR(20),
 			ip_saddr_str		VARCHAR(20),
 			ip_daddr_str		VARCHAR(20),
 			ip_id			SMALLINT UNSIGNED,
