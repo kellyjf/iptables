@@ -13,7 +13,7 @@ for ns in atg4g venturi-1 venturi-2; do
 		echo; echo "-------${label}-------------" 
 		for table in raw mangle nat filter; do
 			echo; echo "------- $table  -------------"
-			$NS iptables -w -t $table -S $chain 2> /dev/null
+			$NS iptables -n -w -t $table -S $chain 2> /dev/null
 		done| sed -e 's/^/\t/'
 	done| sed -e 's/^/\t/'
 	
@@ -32,7 +32,7 @@ for ns in atg4g venturi-1 venturi-2; do
 		echo; echo "------- {$label} -------------" 
 		for table in raw mangle nat filter; do
 			echo; echo "------- $table  -------------"
-			$NS iptables -w -t $table -S $chain 2> /dev/null
+			$NS iptables -n -w -t $table -S $chain 2> /dev/null
 		done| sed -e 's/^/\t/'
 	done| sed -e 's/^/\t/'
 	
