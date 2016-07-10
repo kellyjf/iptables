@@ -12,6 +12,9 @@ sh-% :
 run-% :
 	sudo ulogd -v -c ./$*.conf
 
+x-% :
+	sudo ip netns exec $* bash -c "xterm -T $*"
+
 inspect :
 	sqlite3 /var/log/ulogd/ulogd.db
 

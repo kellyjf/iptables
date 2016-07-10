@@ -39,5 +39,5 @@ CREATE TABLE pkt (
 			arp_daddr		INT UNSIGNED,
 			raw_pktlen		INT UNSIGNED,
 			raw_pktcount		INT UNSIGNED,
-			oob_uid			INT UNSIGNED,
+			oob_uid			INT UNSIGNED
 		);
