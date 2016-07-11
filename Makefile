@@ -19,5 +19,5 @@ inspect :
 	sqlite3 /var/log/ulogd/ulogd.db
 
 clean:
-	rm -f ulogd.db
+	rm -f ulogd.db mcjoin
 	

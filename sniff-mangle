@@ -6,7 +6,6 @@ iptables -t nat -F
 iptables -t mangle -F
 conntrack -F
 
-iptables -t nat -o hostb -A POSTROUTING -j MASQUERADE
 iptables -t mangle  -m conntrack --ctstate NEW -A PREROUTING  -j CONNMARK  --set-mark 5 
 iptables -t mangle  -A PREROUTING  -j MARK  --set-mark 1 
 iptables -t mangle  -A PREROUTING  -j NFLOG --nflog-group=2 --nflog-prefix="PRE"
