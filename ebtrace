@@ -1,32 +1,47 @@
-#! /bin/bash -x
-
-
-opt_t=
+#! /bin/bash 
 
 function usage() {
-	echo "Usage: $(basename $0) options -- iptables-selector"
+	echo "Usage: $(basename $0) options -- ebtables-selector"
 	echo "Options:"
-	echo "-t tag                NFLOG tag"
+	echo "-t table              iptables table"
+	echo "-p prefix             NFLOG tag"
 	echo "-h                    Help(this message)"
 }
 
-while getopts "ht:-" opt ; do
+opt_t="filter"
+
+while getopts "hp:t:-" opt ; do
         case "$opt" in
         -)  break ;;
         t)  opt_t=$OPTARG ;;
+        p)  opt_p=$OPTARG ;;
         h) usage; exit ;;
         esac
 done
 
 shift $(($OPTIND-1))
 selector="$@"
-if [[ -n $opt_t ]]; then
-	TAG="${opt_t}-"
+if [[ -n $opt_p ]]; then
+	TAG="${opt_p}-"
 fi
-ebtables -t filter -A INPUT       ${selector}  --nflog-group 2 --nflog-prefix ${TAG}EFIN
-ebtables -t filter -A FORWARD     ${selector}  --nflog-group 2 --nflog-prefix ${TAG}EFFWD
-ebtables -t filter -A OUTPUT      ${selector}  --nflog-group 2 --nflog-prefix ${TAG}EFOUT
-ebtables -t nat    -A PREROUTING  ${selector}  --nflog-group 2 --nflog-prefix ${TAG}ENPRE
-ebtables -t nat    -A OUTPUT      ${selector}  --nflog-group 2 --nflog-prefix ${TAG}ENOUT
-ebtables -t nat    -A POSTROUTING ${selector}  --nflog-group 2 --nflog-prefix ${TAG}ENPOST
-ebtables -t broute -A BROUTING    ${selector}  --nflog-group 2 --nflog-prefix ${TAG}BROUTE
+
+
+case ${opt_t} in
+	filter)
+		INPUT=1; OUTPUT=1; FORWARD=1;
+		;;
+	nat)
+		OUTPUT=1; PRE=1; POST=1;
+		;;
+	broute)
+		BROUTE=1;
+		;;
+esac
+
+
+[[ $INPUT ]] && ebtables -t ${opt_t} -A INPUT       ${selector}  --nflog-group 2 --nflog-prefix ${TAG}EIN
+[[ $FORWARD ]] && ebtables -t ${opt_t} -A FORWARD     ${selector}  --nflog-group 2 --nflog-prefix ${TAG}EFWD
+[[ $OUTPUT ]] && ebtables -t ${opt_t} -A OUTPUT      ${selector}  --nflog-group 2 --nflog-prefix ${TAG}EOUT
+[[ $PRE ]] && ebtables -t ${opt_t}    -A PREROUTING  ${selector}  --nflog-group 2 --nflog-prefix ${TAG}EPRE
+[[ $POST ]] && ebtables -t ${opt_t}    -A POSTROUTING ${selector}  --nflog-group 2 --nflog-prefix ${TAG}EPOST
+[[ $BROUTE ]] && ebtables -t ${opt_t} -A BROUTING    ${selector}  --nflog-group 2 --nflog-prefix ${TAG}EBROUTE

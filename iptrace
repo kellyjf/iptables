@@ -6,25 +6,46 @@ opt_t=
 function usage() {
 	echo "Usage: $(basename $0) options -- iptables-selector"
 	echo "Options:"
-	echo "-t tag                NFLOG tag"
+	echo "-t table              iptables table"
+	echo "-p prefix             NFLOG tag"
 	echo "-h                    Help(this message)"
 }
 
-while getopts "ht:-" opt ; do
+opt_t="filter"
+
+while getopts "hp:t:-" opt ; do
         case "$opt" in
         -)  break ;;
         t)  opt_t=$OPTARG ;;
+        p)  opt_p=$OPTARG ;;
         h) usage; exit ;;
         esac
 done
 
 shift $(($OPTIND-1))
 selector="$@"
-if [[ -n $opt_t ]]; then
-	TAG="${opt_t}-"
+if [[ -n $opt_p ]]; then
+	TAG="${opt_p}-"
 fi
-iptables -t mangle -A PREROUTING  ${selector} -j NFLOG --nflog-group 2 --nflog-prefix ${TAG}PRE
-iptables -t mangle -A INPUT       ${selector} -j NFLOG --nflog-group 2 --nflog-prefix ${TAG}INPUT
-iptables -t mangle -A FORWARD     ${selector} -j NFLOG --nflog-group 2 --nflog-prefix ${TAG}FWD
-iptables -t mangle -A OUTPUT      ${selector} -j NFLOG --nflog-group 2 --nflog-prefix ${TAG}OUT
-iptables -t mangle -A POSTROUTING ${selector} -j NFLOG --nflog-group 2 --nflog-prefix ${TAG}POST
+
+
+case ${opt_t} in
+	filter)
+		INPUT=1; OUTPUT=1; FORWARD=1;
+		;;
+	mangle)
+		INPUT=1; OUTPUT=1; FORWARD=1; PRE=1; POST=1;
+		;;
+	nat)
+		OUTPUT=1; FORWARD=1; PRE=1; POST=1;
+		;;
+	raw)
+		OUTPUT=1; PRE=1;
+		;;
+esac
+
+[[ $PRE ]] && iptables -t ${opt_t} -A PREROUTING  ${selector} -j NFLOG --nflog-group 2 --nflog-prefix ${TAG}PRE
+[[ $INPUT ]] && iptables -t ${opt_t} -A INPUT       ${selector} -j NFLOG --nflog-group 2 --nflog-prefix ${TAG}INPUT
+[[ $FORWARD ]] && iptables -t ${opt_t} -A FORWARD     ${selector} -j NFLOG --nflog-group 2 --nflog-prefix ${TAG}FWD
+[[ $OUTPUT ]] && iptables -t ${opt_t} -A OUTPUT      ${selector} -j NFLOG --nflog-group 2 --nflog-prefix ${TAG}OUT
+[[ $POST ]] && iptables -t ${opt_t} -A POSTROUTING ${selector} -j NFLOG --nflog-group 2 --nflog-prefix ${TAG}POST
