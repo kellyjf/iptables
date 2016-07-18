@@ -1,0 +1,32 @@
+#! /bin/bash -x
+
+
+opt_t=
+
+function usage() {
+	echo "Usage: $(basename $0) options -- iptables-selector"
+	echo "Options:"
+	echo "-t tag                NFLOG tag"
+	echo "-h                    Help(this message)"
+}
+
+while getopts "ht:-" opt ; do
+        case "$opt" in
+        -)  break ;;
+        t)  opt_t=$OPTARG ;;
+        h) usage; exit ;;
+        esac
+done
+
+shift $(($OPTIND-1))
+selector="$@"
+if [[ -n $opt_t ]]; then
+	TAG="${opt_t}-"
+fi
+ebtables -t filter -A INPUT       ${selector}  --nflog-group 2 --nflog-prefix ${TAG}EFIN
+ebtables -t filter -A FORWARD     ${selector}  --nflog-group 2 --nflog-prefix ${TAG}EFFWD
+ebtables -t filter -A OUTPUT      ${selector}  --nflog-group 2 --nflog-prefix ${TAG}EFOUT
+ebtables -t nat    -A PREROUTING  ${selector}  --nflog-group 2 --nflog-prefix ${TAG}ENPRE
+ebtables -t nat    -A OUTPUT      ${selector}  --nflog-group 2 --nflog-prefix ${TAG}ENOUT
+ebtables -t nat    -A POSTROUTING ${selector}  --nflog-group 2 --nflog-prefix ${TAG}ENPOST
+ebtables -t broute -A BROUTING    ${selector}  --nflog-group 2 --nflog-prefix ${TAG}BROUTE
