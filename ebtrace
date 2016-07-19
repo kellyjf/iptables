@@ -39,9 +39,9 @@ case ${opt_t} in
 esac
 
 
-[[ $INPUT ]] && ebtables -t ${opt_t} -A INPUT       ${selector}  --nflog-group 2 --nflog-prefix ${TAG}EIN
+[[ $INPUT ]]   && ebtables -t ${opt_t} -A INPUT       ${selector}  --nflog-group 2 --nflog-prefix ${TAG}EIN
 [[ $FORWARD ]] && ebtables -t ${opt_t} -A FORWARD     ${selector}  --nflog-group 2 --nflog-prefix ${TAG}EFWD
-[[ $OUTPUT ]] && ebtables -t ${opt_t} -A OUTPUT      ${selector}  --nflog-group 2 --nflog-prefix ${TAG}EOUT
-[[ $PRE ]] && ebtables -t ${opt_t}    -A PREROUTING  ${selector}  --nflog-group 2 --nflog-prefix ${TAG}EPRE
-[[ $POST ]] && ebtables -t ${opt_t}    -A POSTROUTING ${selector}  --nflog-group 2 --nflog-prefix ${TAG}EPOST
-[[ $BROUTE ]] && ebtables -t ${opt_t} -A BROUTING    ${selector}  --nflog-group 2 --nflog-prefix ${TAG}EBROUTE
+[[ $OUTPUT ]]  && ebtables -t ${opt_t} -A OUTPUT      ${selector}  --nflog-group 2 --nflog-prefix ${TAG}EOUT
+[[ $PRE ]]     && ebtables -t ${opt_t} -A PREROUTING  ${selector}  --nflog-group 2 --nflog-prefix ${TAG}EPRE
+[[ $POST ]]    && ebtables -t ${opt_t} -A POSTROUTING ${selector}  --nflog-group 2 --nflog-prefix ${TAG}EPOST
+[[ $BROUTE ]]  && ebtables -t ${opt_t} -A BROUTING    ${selector}  --nflog-group 2 --nflog-prefix ${TAG}EBROUTE
