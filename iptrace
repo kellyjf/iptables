@@ -13,21 +13,27 @@ function usage() {
 
 opt_t="filter"
 
-valid=0
 while getopts "hp:t:-" opt ; do
         case "$opt" in
-        -)  valid=1; break ;;
+        -)  break ;;
         t)  opt_t=$OPTARG ;;
         p)  opt_p=$OPTARG ;;
         h) usage; exit ;;
         esac
 done
 
-if [ $valid -eq 0 ] ; then
+if [ $# -lt 1 ]; then
 	usage
 	exit
 fi
-shift $(($OPTIND-1))
+
+shift $(($OPTIND-2))
+if [ $1 != "--" ] ; then
+	usage
+	exit
+fi
+shift
+
 selector="$@"
 if [[ -n $opt_p ]]; then
 	TAG="${opt_p}-"
