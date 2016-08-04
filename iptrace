@@ -13,15 +13,20 @@ function usage() {
 
 opt_t="filter"
 
+valid=0
 while getopts "hp:t:-" opt ; do
         case "$opt" in
-        -)  break ;;
+        -)  valid=1; break ;;
         t)  opt_t=$OPTARG ;;
         p)  opt_p=$OPTARG ;;
         h) usage; exit ;;
         esac
 done
 
+if [ $valid -eq 0 ] ; then
+	usage
+	exit
+fi
 shift $(($OPTIND-1))
 selector="$@"
 if [[ -n $opt_p ]]; then
