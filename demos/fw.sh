@@ -25,8 +25,8 @@ $ROUTER ip route replace ${SUBWAN2}.0/30 dev wan2 table wan2
 $ROUTER ip route replace default via ${SUBWAN2}.1 table wan2
 
 $ROUTER iptables -t mangle -F
-$ROUTER ipset destroy prof1
-$ROUTER ipset destroy prof2
+$ROUTER ipset destroy prof1 &> /dev/null
+$ROUTER ipset destroy prof2 &> /dev/null
 
 $ROUTER ipset create prof1 hash:ip
 $ROUTER ipset create prof2 hash:ip
